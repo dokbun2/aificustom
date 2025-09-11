@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, RefObject, useState } from 'react';
-import type { RootJsonData, ShotGroup } from '../types';
+import type { NormalizedData, ShotGroup } from '../types';
 import ShotCard from './ShotCard';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 
 interface PromptViewerProps {
-  data: RootJsonData;
+  data: NormalizedData;
   onVisibleShotChange: (shotId: string | null) => void;
   scrollContainerRef: RefObject<HTMLElement>;
 }
@@ -48,13 +48,17 @@ const PromptViewer: React.FC<PromptViewerProps> = ({ data, onVisibleShotChange, 
     return () => {
       observer.current?.disconnect();
     };
-  }, [data.video_prompts, onVisibleShotChange, scrollContainerRef]);
+  }, [data.prompts, onVisibleShotChange, scrollContainerRef]);
 
   // Group prompts by shot_id to handle multiple plans per shot
-  const groupedPrompts = data.video_prompts.reduce<ShotGroup[]>((acc, prompt) => {
+  const groupedPrompts = data.prompts.reduce<ShotGroup[]>((acc, prompt) => {
     let group = acc.find(g => g.shot_id === prompt.shot_id);
     if (!group) {
-      group = { shot_id: prompt.shot_id, prompts: [] };
+      group = { 
+        shot_id: prompt.shot_id, 
+        shot_description: prompt.shot_description, 
+        prompts: [] 
+      };
       acc.push(group);
     }
     group.prompts.push(prompt);

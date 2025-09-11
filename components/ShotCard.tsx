@@ -1,6 +1,5 @@
-
 import React, { useState, useMemo } from 'react';
-import type { ShotGroup, VideoPrompt } from '../types';
+import type { ShotGroup, NormalizedPrompt } from '../types';
 import PromptSetViewer from './PromptSetViewer';
 
 interface ShotCardProps {
@@ -10,7 +9,7 @@ interface ShotCardProps {
 const ShotCard: React.FC<ShotCardProps> = ({ shotGroup }) => {
   // Group prompts by plan (e.g., A, B, C from image_id)
   const plans = useMemo(() => {
-    return shotGroup.prompts.reduce<Record<string, VideoPrompt[]>>((acc, prompt) => {
+    return shotGroup.prompts.reduce<Record<string, NormalizedPrompt[]>>((acc, prompt) => {
       const parts = prompt.image_id.split('-');
       // Assuming format is SHOT-PLAN-INDEX, e.g., S01.01-A-01
       const planKey = parts.length > 1 ? parts[1] : 'A'; 
@@ -34,6 +33,7 @@ const ShotCard: React.FC<ShotCardProps> = ({ shotGroup }) => {
       <header className="bg-gray-800/50 p-4 border-b border-gray-700 flex flex-col sm:flex-row justify-between sm:items-center">
         <div>
           <h3 className="text-xl font-bold text-white">{shotGroup.shot_id}</h3>
+          {shotGroup.shot_description && <p className="text-sm text-gray-400 mt-1">{shotGroup.shot_description}</p>}
         </div>
         
         {/* Plan Tabs */}

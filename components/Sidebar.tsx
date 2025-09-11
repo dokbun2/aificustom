@@ -1,21 +1,20 @@
-
 import React from 'react';
-import type { SceneInfo, VideoPrompt } from '../types';
+import type { UnifiedSceneInfo, NormalizedPrompt } from '../types';
 import { XCircleIcon } from './icons/XCircleIcon';
 
 interface SidebarProps {
-    sceneInfo: SceneInfo;
-    videoPrompts: VideoPrompt[];
+    sceneInfo: UnifiedSceneInfo;
+    prompts: NormalizedPrompt[];
     activeShotId: string | null;
     onShotClick: (shotId: string) => void;
     isOpen: boolean;
     onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ sceneInfo, videoPrompts, activeShotId, onShotClick, isOpen, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ sceneInfo, prompts, activeShotId, onShotClick, isOpen, onClose }) => {
     
     // Create a unique list of shots based on shot_id to prevent duplicates in navigation
-    const uniqueShots = videoPrompts.reduce<VideoPrompt[]>((acc, current) => {
+    const uniqueShots = prompts.reduce<NormalizedPrompt[]>((acc, current) => {
         if (!acc.some(item => item.shot_id === current.shot_id)) {
             acc.push(current);
         }
@@ -59,7 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sceneInfo, videoPrompts, activeShotId
                                 }`}
                             >
                                 <span className="font-bold">{prompt.shot_id}</span>
-                                <span className="block text-xs text-gray-400 truncate">{prompt.image_id}</span>
+                                <span className="block text-xs text-gray-400 truncate">{prompt.image_title || prompt.image_id}</span>
                             </a>
                         </li>
                     ))}

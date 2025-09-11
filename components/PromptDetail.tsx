@@ -9,9 +9,8 @@ interface PromptDetailProps {
 const PromptDetail: React.FC<PromptDetailProps> = ({ title, content }) => {
   const [isCopied, setIsCopied] = useState(false);
 
-  // The titles are formatted in ShotCard.tsx.
-  // This ensures the button only shows for specific, copyable text fields.
-  const showCopyButton = title === 'Prompt (English)' || title === 'Kling Structured Prompt';
+  // This component is used for displaying various prompt text fields, which should always be copyable.
+  const showCopyButton = true;
 
   const handleCopy = () => {
     if (!navigator.clipboard) return; // Safeguard for older browsers
