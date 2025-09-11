@@ -1,0 +1,5 @@
+{
+  "name": "Video Prompt Viewer",
+  "description": "An application to upload and visualize structured video prompt JSON data, providing a clear and organized view of prompts for different AI tools.",
+  "requestFramePermissions": []
+}
