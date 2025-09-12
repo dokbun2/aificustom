@@ -5,9 +5,10 @@ import CodeBlock from './CodeBlock';
 
 interface PromptSetViewerProps {
   promptData: NormalizedPrompt;
+  onEditPrompt?: (promptData: NormalizedPrompt) => void;
 }
 
-const PromptSetViewer: React.FC<PromptSetViewerProps> = ({ promptData }) => {
+const PromptSetViewer: React.FC<PromptSetViewerProps> = ({ promptData, onEditPrompt }) => {
   const tabs = Object.keys(promptData.prompts).filter(key => {
     const value = promptData.prompts[key as keyof (Prompts | ImagePrompts)];
     // Filter out keys that point to empty strings, which is common for translated fields in image prompts
@@ -69,7 +70,10 @@ const PromptSetViewer: React.FC<PromptSetViewerProps> = ({ promptData }) => {
           .map(([key, value]) => {
             if (typeof value === 'object' && value !== null) {
               const title = key === 'prompt_object_v6' ? 'Universal' : formatTitle(key);
-              return <CodeBlock key={key} title={title} code={value} />;
+              const handleEdit = key === 'prompt_object_v6' && onEditPrompt
+                ? () => onEditPrompt(promptData)
+                : undefined;
+              return <CodeBlock key={key} title={title} code={value} onEdit={handleEdit} />;
             }
             if (typeof value === 'string' && value.trim() !== '') {
               return <PromptDetail key={key} title={formatTitle(key)} content={value} />;

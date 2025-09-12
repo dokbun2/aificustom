@@ -4,9 +4,10 @@ import PromptSetViewer from './PromptSetViewer';
 
 interface ShotCardProps {
   shotGroup: ShotGroup;
+  onEditPrompt: (promptData: NormalizedPrompt) => void;
 }
 
-const ShotCard: React.FC<ShotCardProps> = ({ shotGroup }) => {
+const ShotCard: React.FC<ShotCardProps> = ({ shotGroup, onEditPrompt }) => {
   // Group prompts by plan (e.g., A, B, C from image_id)
   const plans = useMemo(() => {
     return shotGroup.prompts.reduce<Record<string, NormalizedPrompt[]>>((acc, prompt) => {
@@ -60,7 +61,7 @@ const ShotCard: React.FC<ShotCardProps> = ({ shotGroup }) => {
 
       <div className="p-4 sm:p-6 space-y-4">
         {plans[activePlan]?.map(promptData => (
-          <PromptSetViewer key={promptData.image_id} promptData={promptData} />
+          <PromptSetViewer key={promptData.image_id} promptData={promptData} onEditPrompt={onEditPrompt} />
         ))}
       </div>
     </div>

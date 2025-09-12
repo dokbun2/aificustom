@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, ChangeEvent, useEffect, useRef } from 'react';
-import type { AnyRootJsonData, NormalizedData, NormalizedPrompt, VideoRootJsonData, ImageRootJsonData } from './types';
+import type { AnyRootJsonData, NormalizedData, NormalizedPrompt, VideoRootJsonData, ImageRootJsonData, Prompts, PromptObjectV6 } from './types';
 import PromptViewer from './components/PromptViewer';
 import Sidebar from './components/Sidebar';
 import { UploadIcon } from './components/icons/UploadIcon';
@@ -9,6 +9,7 @@ import { XCircleIcon } from './components/icons/XCircleIcon';
 import { MenuIcon } from './components/icons/MenuIcon';
 import { HomeIcon } from './components/icons/HomeIcon';
 import StudioSelection from './components/StudioSelection';
+import PromptEditor from './components/PromptEditor';
 
 const UploadPlaceholder: React.FC<{ studioMode: 'image' | 'video' }> = ({ studioMode }) => {
   const isImageMode = studioMode === 'image';
@@ -38,6 +39,7 @@ const App: React.FC = () => {
   const [fileName, setFileName] = useState<string | null>(null);
   const [activeShotId, setActiveShotId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [editingPrompt, setEditingPrompt] = useState<NormalizedPrompt | null>(null);
   const mainContentRef = useRef<HTMLElement | null>(null);
 
   const handleFileChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
@@ -137,6 +139,7 @@ const App: React.FC = () => {
     setFileName(null);
     setActiveShotId(null);
     setIsSidebarOpen(false);
+    setEditingPrompt(null);
     setStudioMode(null); // Reset to studio selection
   };
 
@@ -149,16 +152,49 @@ const App: React.FC = () => {
     setIsSidebarOpen(false); // Close sidebar on selection
   };
   
+  const handleEditPrompt = (promptToEdit: NormalizedPrompt) => {
+    setEditingPrompt(promptToEdit);
+  };
+
+  const handleCloseEditor = () => {
+    setEditingPrompt(null);
+  };
+
+  const handleSavePrompt = (updatedPromptObject: PromptObjectV6) => {
+    if (!editingPrompt || !normalizedData) return;
+
+    const updatedPrompts = normalizedData.prompts.map(p => {
+      if (p.image_id === editingPrompt.image_id) {
+        const newP = JSON.parse(JSON.stringify(p));
+        if ('veo2' in newP.prompts) {
+          (newP.prompts as Prompts).veo2.prompt_object_v6 = updatedPromptObject;
+        }
+        return newP;
+      }
+      return p;
+    });
+
+    setNormalizedData({
+      ...normalizedData,
+      prompts: updatedPrompts,
+    });
+    setEditingPrompt(null);
+  };
+
   // Close sidebar on escape key press
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setIsSidebarOpen(false);
+        if (editingPrompt) {
+          handleCloseEditor();
+        } else {
+          setIsSidebarOpen(false);
+        }
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [editingPrompt]);
 
   return (
     <div className="h-screen bg-gray-950 text-gray-100 flex flex-col">
@@ -246,9 +282,17 @@ const App: React.FC = () => {
                 <UploadPlaceholder studioMode={studioMode} />
             )}
 
-            {normalizedData && <PromptViewer data={normalizedData} onVisibleShotChange={setActiveShotId} scrollContainerRef={mainContentRef} />}
+            {normalizedData && <PromptViewer data={normalizedData} onVisibleShotChange={setActiveShotId} scrollContainerRef={mainContentRef} onEditPrompt={handleEditPrompt} />}
         </main>
       </div>
+
+      {editingPrompt && studioMode === 'video' && (
+        <PromptEditor 
+          promptData={editingPrompt} 
+          onSave={handleSavePrompt}
+          onClose={handleCloseEditor}
+        />
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, RefObject, useState } from 'react';
-import type { NormalizedData, ShotGroup } from '../types';
+import type { NormalizedData, NormalizedPrompt, ShotGroup } from '../types';
 import ShotCard from './ShotCard';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 
@@ -7,6 +7,7 @@ interface PromptViewerProps {
   data: NormalizedData;
   onVisibleShotChange: (shotId: string | null) => void;
   scrollContainerRef: RefObject<HTMLElement>;
+  onEditPrompt: (promptData: NormalizedPrompt) => void;
 }
 
 const InfoItem: React.FC<{ label: string; value: string | number | string[] }> = ({ label, value }) => (
@@ -18,7 +19,7 @@ const InfoItem: React.FC<{ label: string; value: string | number | string[] }> =
     </div>
 );
 
-const PromptViewer: React.FC<PromptViewerProps> = ({ data, onVisibleShotChange, scrollContainerRef }) => {
+const PromptViewer: React.FC<PromptViewerProps> = ({ data, onVisibleShotChange, scrollContainerRef, onEditPrompt }) => {
   const observer = useRef<IntersectionObserver | null>(null);
   const [isSceneInfoOpen, setIsSceneInfoOpen] = useState(false);
 
@@ -91,7 +92,7 @@ const PromptViewer: React.FC<PromptViewerProps> = ({ data, onVisibleShotChange, 
 
         <section className="space-y-6">
             {groupedPrompts.map((group) => (
-                <ShotCard key={group.shot_id} shotGroup={group} />
+                <ShotCard key={group.shot_id} shotGroup={group} onEditPrompt={onEditPrompt} />
             ))}
         </section>
     </div>
