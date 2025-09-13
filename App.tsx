@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { AnyRootJsonData, NormalizedData, NormalizedPrompt, VideoRootJsonData, ImageRootJsonData, Prompts, PromptObjectV6, AudioPromptData } from './types';
 import PromptViewer from './components/PromptViewer';
 import Sidebar from './components/Sidebar';
-import { Upload, FileJson, XCircle, Menu, Home, Download, Film, Cable } from 'lucide-react';
+import { Upload, FileJson, XCircle, Menu, Home, Download, Film, Cable, Clapperboard } from 'lucide-react';
 import { VideoGenerationResponseSchema } from './lib/geminiVideoSchema';
 import StudioSelection from './components/StudioSelection';
 import PromptEditor from './components/PromptEditor';
@@ -417,7 +417,8 @@ ${JSON.stringify(rawImageJson, null, 2)}
                       <Menu className="w-6 h-6" />
                   </button>
               )}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                  <Clapperboard className="w-7 h-7 text-teal-400" />
                   <h1 className="text-lg sm:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 whitespace-nowrap">
                       AIFI 커스텀영상만들기
                   </h1>
@@ -447,53 +448,53 @@ ${JSON.stringify(rawImageJson, null, 2)}
                </button>
 
                {fileName && !error && (
-                  <div className="hidden sm:flex items-center gap-2 overflow-hidden bg-gray-700/50 p-2 rounded-lg">
-                    <FileJson className="w-5 h-5" />
-                    <span className="font-medium text-gray-200 truncate text-sm max-w-[120px]">{fileName}</span>
-                    <button onClick={handleClearProject} className="text-gray-400 hover:text-white transition-colors flex-shrink-0">
-                      <XCircle className="w-5 h-5" />
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg hover:bg-gray-800/70 transition-all">
+                    <FileJson className="w-4 h-4 text-gray-400" />
+                    <span className="font-medium text-gray-300 truncate text-sm max-w-[150px]">{fileName}</span>
+                    <button onClick={handleClearProject} className="text-gray-500 hover:text-red-400 transition-colors flex-shrink-0 ml-1">
+                      <XCircle className="w-4 h-4" />
                     </button>
                   </div>
                 )}
 
                {studioMode === 'image' && rawImageJson && (
                  <div className="flex items-center gap-2">
-                    <button onClick={() => handleDownloadJson('image')} className="relative cursor-pointer bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg flex items-center gap-2 text-sm">
-                        <Download className="w-5 h-5" />
-                        <span>JSON 다운로드</span>
+                    <button onClick={() => handleDownloadJson('image')} className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg hover:bg-gray-800/70 hover:border-gray-600 text-gray-300 hover:text-white transition-all text-sm font-medium">
+                        <Download className="w-4 h-4" />
+                        <span className="hidden lg:inline">JSON 다운로드</span>
                     </button>
-                    <button onClick={handleGenerateVideoPrompts} disabled={isLoading} className="relative cursor-pointer bg-teal-600 hover:bg-teal-700 disabled:bg-teal-800/50 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg flex items-center justify-center gap-2 text-sm">
+                    <button onClick={handleGenerateVideoPrompts} disabled={isLoading} className="flex items-center gap-2 px-4 py-2 bg-teal-600/20 backdrop-blur-sm border border-teal-500 rounded-lg hover:bg-teal-600/30 hover:border-teal-400 disabled:bg-gray-800/50 disabled:border-gray-700 text-teal-400 hover:text-teal-300 disabled:text-gray-500 transition-all text-sm font-medium">
                          {isLoading ? (
-                            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                         ) : (
-                            <Film className="w-5 h-5" />
+                            <Film className="w-4 h-4" />
                         )}
-                        <span>{isLoading ? '생성 중...' : '영상 프롬프트 생성'}</span>
+                        <span className="hidden sm:inline">{isLoading ? '생성 중...' : '영상 프롬프트 생성'}</span>
                     </button>
                  </div>
                )}
                
                 {studioMode === 'video' && rawVideoJson && (
-                    <button onClick={() => handleDownloadJson('video')} className="relative cursor-pointer bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg flex items-center gap-2 text-sm">
-                        <Download className="w-5 h-5" />
-                        <span>JSON 다운로드</span>
+                    <button onClick={() => handleDownloadJson('video')} className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg hover:bg-gray-800/70 hover:border-gray-600 text-gray-300 hover:text-white transition-all text-sm font-medium">
+                        <Download className="w-4 h-4" />
+                        <span className="hidden lg:inline">JSON 다운로드</span>
                     </button>
                 )}
-                
+
                 {studioMode === 'audio' && generatedAudioJson && (
-                    <button onClick={() => handleDownloadJson('audio')} className="relative cursor-pointer bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg flex items-center gap-2 text-sm">
-                        <Download className="w-5 h-5" />
-                        <span>JSON 다운로드</span>
+                    <button onClick={() => handleDownloadJson('audio')} className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg hover:bg-gray-800/70 hover:border-gray-600 text-gray-300 hover:text-white transition-all text-sm font-medium">
+                        <Download className="w-4 h-4" />
+                        <span className="hidden lg:inline">JSON 다운로드</span>
                     </button>
                 )}
               
                {showUploadButton && (
-                 <label htmlFor="file-upload" className="relative cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg flex items-center gap-2 text-sm">
-                    <Upload className="w-5 h-5" />
-                    <span>JSON업로드</span>
+                 <label htmlFor="file-upload" className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 backdrop-blur-sm border border-blue-500 rounded-lg hover:bg-blue-600/30 hover:border-blue-400 text-blue-400 hover:text-blue-300 transition-all text-sm font-medium cursor-pointer">
+                    <Upload className="w-4 h-4" />
+                    <span className="hidden sm:inline">JSON업로드</span>
                  </label>
                )}
 
@@ -524,13 +525,13 @@ ${JSON.stringify(rawImageJson, null, 2)}
 
         <main ref={mainContentRef} className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
             {fileName && !error && (
-                <div className="sm:hidden mb-4 flex items-center gap-3 overflow-hidden bg-gray-700/50 p-3 rounded-lg w-full justify-between">
+                <div className="sm:hidden mb-4 flex items-center justify-between gap-2 px-3 py-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg">
                     <div className="flex items-center gap-2 overflow-hidden">
-                    <FileJson className="w-5 h-5" />
-                    <span className="font-medium text-gray-200 truncate text-sm">{fileName}</span>
+                        <FileJson className="w-4 h-4 text-gray-400" />
+                        <span className="font-medium text-gray-300 truncate text-sm">{fileName}</span>
                     </div>
-                    <button onClick={handleClearProject} className="text-gray-400 hover:text-white transition-colors flex-shrink-0">
-                    <XCircle className="w-5 h-5" />
+                    <button onClick={handleClearProject} className="text-gray-500 hover:text-red-400 transition-colors flex-shrink-0">
+                        <XCircle className="w-4 h-4" />
                     </button>
                 </div>
             )}
