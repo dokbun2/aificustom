@@ -1,85 +1,85 @@
-import { Type } from "@google/genai";
+import { SchemaType } from "@google/generative-ai";
 
 const SettingsSchema = {
-    type: Type.OBJECT,
+    type: SchemaType.OBJECT,
     properties: {
-        duration: { type: Type.STRING },
-        camera_movement: { type: Type.STRING },
-        aspect_ratio: { type: Type.STRING },
+        duration: { type: SchemaType.STRING },
+        camera_movement: { type: SchemaType.STRING },
+        aspect_ratio: { type: SchemaType.STRING },
     },
     required: ["duration"]
 };
 
 const Veo3PromptObjectSchema = {
-    type: Type.OBJECT,
+    type: SchemaType.OBJECT,
     description: "VEO3-specific structured prompt object.",
     properties: {
         core_module: {
-            type: Type.OBJECT,
+            type: SchemaType.OBJECT,
             properties: {
                 character: {
-                    type: Type.OBJECT,
+                    type: SchemaType.OBJECT,
                     properties: {
                         char_01: {
-                            type: Type.OBJECT,
+                            type: SchemaType.OBJECT,
                             properties: {
-                                id: { type: Type.STRING },
-                                signature_details: { type: Type.STRING },
-                                voice_consistency: { type: Type.STRING },
+                                id: { type: SchemaType.STRING },
+                                signature_details: { type: SchemaType.STRING },
+                                voice_consistency: { type: SchemaType.STRING },
                             },
                         },
                     },
                 },
                 location_baseline: {
-                    type: Type.OBJECT,
+                    type: SchemaType.OBJECT,
                     properties: {
-                        setting: { type: Type.STRING },
+                        setting: { type: SchemaType.STRING },
                     },
                 },
             },
         },
         video_module: {
-            type: Type.OBJECT,
+            type: SchemaType.OBJECT,
             properties: {
                 metadata: {
-                    type: Type.OBJECT,
+                    type: SchemaType.OBJECT,
                     properties: {
-                        prompt_name: { type: Type.STRING },
-                        duration_seconds: { type: Type.NUMBER },
+                        prompt_name: { type: SchemaType.STRING },
+                        duration_seconds: { type: SchemaType.NUMBER },
                     },
                 },
                 global: {
-                    type: Type.OBJECT,
+                    type: SchemaType.OBJECT,
                     properties: {
-                        description: { type: Type.STRING },
-                        style: { type: Type.STRING },
+                        description: { type: SchemaType.STRING },
+                        style: { type: SchemaType.STRING },
                     },
                 },
                 dialogue_block: {
-                    type: Type.OBJECT,
+                    type: SchemaType.OBJECT,
                     properties: {
-                        dialogue: { type: Type.STRING },
+                        dialogue: { type: SchemaType.STRING },
                     },
                 },
                 sequence: {
-                    type: Type.ARRAY,
+                    type: SchemaType.ARRAY,
                     items: {
-                        type: Type.OBJECT,
+                        type: SchemaType.OBJECT,
                         properties: {
-                            timestamp: { type: Type.STRING },
-                            camera: { type: Type.STRING },
-                            motion: { type: Type.STRING },
-                            audio: { type: Type.STRING },
+                            timestamp: { type: SchemaType.STRING },
+                            camera: { type: SchemaType.STRING },
+                            motion: { type: SchemaType.STRING },
+                            audio: { type: SchemaType.STRING },
                             effects: {
-                                type: Type.ARRAY,
-                                items: { type: Type.STRING }
+                                type: SchemaType.ARRAY,
+                                items: { type: SchemaType.STRING }
                             },
                         },
                     },
                 },
                 negative_prompts: {
-                    type: Type.ARRAY,
-                    items: { type: Type.STRING }
+                    type: SchemaType.ARRAY,
+                    items: { type: SchemaType.STRING }
                 },
             },
         },
@@ -87,31 +87,31 @@ const Veo3PromptObjectSchema = {
 };
 
 const LumaPromptSchema = {
-    type: Type.OBJECT,
+    type: SchemaType.OBJECT,
     properties: {
-        prompt_en: { type: Type.STRING },
-        prompt_translated: { type: Type.STRING },
+        prompt_en: { type: SchemaType.STRING },
+        prompt_translated: { type: SchemaType.STRING },
         settings: SettingsSchema,
     },
     required: ["prompt_en", "settings"]
 };
 
 const KlingPromptSchema = {
-    type: Type.OBJECT,
+    type: SchemaType.OBJECT,
     properties: {
-        prompt_en: { type: Type.STRING },
-        prompt_translated: { type: Type.STRING },
+        prompt_en: { type: SchemaType.STRING },
+        prompt_translated: { type: SchemaType.STRING },
         settings: SettingsSchema,
-        kling_structured_prompt: { type: Type.STRING },
+        kling_structured_prompt: { type: SchemaType.STRING },
     },
     required: ["prompt_en", "settings", "kling_structured_prompt"]
 };
 
 const Veo2PromptSchema = {
-    type: Type.OBJECT,
+    type: SchemaType.OBJECT,
     properties: {
-        prompt_en: { type: Type.STRING },
-        prompt_translated: { type: Type.STRING },
+        prompt_en: { type: SchemaType.STRING },
+        prompt_translated: { type: SchemaType.STRING },
         settings: SettingsSchema,
         prompt_object_v6: Veo3PromptObjectSchema,
     },
@@ -119,21 +119,21 @@ const Veo2PromptSchema = {
 };
 
 const VideoPromptSchema = {
-    type: Type.OBJECT,
+    type: SchemaType.OBJECT,
     properties: {
-        image_id: { type: Type.STRING },
-        shot_id: { type: Type.STRING },
+        image_id: { type: SchemaType.STRING },
+        shot_id: { type: SchemaType.STRING },
         image_reference: {
-            type: Type.OBJECT,
+            type: SchemaType.OBJECT,
             properties: {
-                title: { type: Type.STRING },
-                description: { type: Type.STRING },
+                title: { type: SchemaType.STRING },
+                description: { type: SchemaType.STRING },
             },
             required: ["title", "description"],
         },
         // source_data and extracted_data are removed as they are empty objects and cause schema validation errors.
         prompts: {
-            type: Type.OBJECT,
+            type: SchemaType.OBJECT,
             properties: {
                 veo2: Veo2PromptSchema,
                 kling: KlingPromptSchema,
@@ -146,34 +146,34 @@ const VideoPromptSchema = {
 };
 
 export const VideoGenerationResponseSchema = {
-    type: Type.OBJECT,
+    type: SchemaType.OBJECT,
     properties: {
-        stage: { type: Type.INTEGER, description: "Must be 7." },
-        version: { type: Type.STRING, description: "Must be '7.1 (Hybrid)'." },
-        timestamp: { type: Type.STRING, description: "Current timestamp in ISO 8601 format." },
+        stage: { type: SchemaType.INTEGER, description: "Must be 7." },
+        version: { type: SchemaType.STRING, description: "Must be '7.1 (Hybrid)'." },
+        timestamp: { type: SchemaType.STRING, description: "Current timestamp in ISO 8601 format." },
         scene_info: {
-            type: Type.OBJECT,
+            type: SchemaType.OBJECT,
             properties: {
-                scene_id: { type: Type.STRING },
-                scene_title: { type: Type.STRING },
-                source_stage5_file: { type: Type.STRING },
-                processed_shots: { type: Type.INTEGER },
-                processed_images: { type: Type.INTEGER },
-                selected_ai_tools: { type: Type.ARRAY, items: { type: Type.STRING } },
+                scene_id: { type: SchemaType.STRING },
+                scene_title: { type: SchemaType.STRING },
+                source_stage5_file: { type: SchemaType.STRING },
+                processed_shots: { type: SchemaType.INTEGER },
+                processed_images: { type: SchemaType.INTEGER },
+                selected_ai_tools: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
             },
             required: ["scene_id", "scene_title", "source_stage5_file", "processed_shots", "processed_images", "selected_ai_tools"],
         },
         generation_settings: {
-            type: Type.OBJECT,
+            type: SchemaType.OBJECT,
             properties: {
-                selected_ai_tools: { type: Type.ARRAY, items: { type: Type.STRING } },
-                translation_language: { type: Type.STRING },
-                modification_mode: { type: Type.BOOLEAN },
+                selected_ai_tools: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+                translation_language: { type: SchemaType.STRING },
+                modification_mode: { type: SchemaType.BOOLEAN },
             },
             required: ["selected_ai_tools", "translation_language", "modification_mode"],
         },
         video_prompts: {
-            type: Type.ARRAY,
+            type: SchemaType.ARRAY,
             items: VideoPromptSchema,
         },
     },

@@ -1,16 +1,9 @@
 import React, { useState, useCallback, ChangeEvent, useEffect, useRef } from 'react';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { AnyRootJsonData, NormalizedData, NormalizedPrompt, VideoRootJsonData, ImageRootJsonData, Prompts, PromptObjectV6, AudioPromptData } from './types';
 import PromptViewer from './components/PromptViewer';
 import Sidebar from './components/Sidebar';
-import { UploadIcon } from './components/icons/UploadIcon';
-import { FileJsonIcon } from './components/icons/FileJsonIcon';
-import { XCircleIcon } from './components/icons/XCircleIcon';
-import { MenuIcon } from './components/icons/MenuIcon';
-import { HomeIcon } from './components/icons/HomeIcon';
-import { DownloadIcon } from './components/icons/DownloadIcon';
-import { FilmIcon } from './components/icons/FilmIcon';
-import { ApiIcon } from './components/icons/ApiIcon';
+import { Upload, FileJson, XCircle, Menu, Home, Download, Film, Cable } from 'lucide-react';
 import { VideoGenerationResponseSchema } from './lib/geminiVideoSchema';
 import StudioSelection from './components/StudioSelection';
 import PromptEditor from './components/PromptEditor';
@@ -231,37 +224,72 @@ const App: React.FC = () => {
       return;
     }
 
+    if (!apiKey) {
+      setError("API key is not configured. Please connect your API first.");
+      return;
+    }
+
+    if (!selectedModel) {
+      setError("No model selected. Please select a model.");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
-        if (!process.env.API_KEY) throw new Error("API key is not configured.");
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: selectedModel });
 
-        const instruction = `You are an expert video prompt engineer. Your task is to convert the provided Stage 6 (Image Prompt) JSON into a Stage 7 (Video Prompt) JSON.
-Follow the "AI Video Framework Stage 7 Guide v7.1" precisely.
+        const instruction = `You are an expert video prompt engineer. Your task is to convert the provided Stage 6 (Image Prompt) JSON into a Stage 7 (Video Prompt) JSON following the "AI Video Framework Stage 7 Guide v7.1" precisely.
 
-1.  **Analyze**: Analyze the Stage 6 JSON, paying attention to characters, locations, actions, camera movements, and visual styles defined in the 'csv_data' for each image.
-2.  **Core Module**: Create a \`core_module\` to ensure consistency. Extract character details and location baselines from the Stage 6 data.
-3.  **Video Module**: For each image in the Stage 6 JSON, create a corresponding \`video_module\`. The \`global.description\` should be a cinematic summary of the action. The \`sequence\` should detail the motion based on the image description.
-4.  **Hybrid Bridge**: Generate prompts for all specified AI tools (\`veo2\`, \`kling\`, \`luma\`). First, create the master \`prompt_object_v6\` for \`veo2\`. Then, derive the \`kling_structured_prompt\` and the simple \`prompt_en\` for \`luma\` from that master object to ensure directorial consistency.
-5.  **Output**: The final output MUST be a single, valid JSON object that strictly adheres to the provided Stage 7 schema. Ensure all required fields, including \`image_reference\`, are populated correctly.
+## Analysis Requirements:
+1. **Analyze**: Carefully analyze the Stage 6 JSON, paying attention to characters, locations, actions, camera movements, and visual styles defined in the 'csv_data' for each image.
 
-Here is the Stage 6 JSON data:
+2. **Core Module**: Create a comprehensive 'core_module' to ensure consistency. Extract character details and location baselines from the Stage 6 data.
+
+3. **Video Module**: For each image in the Stage 6 JSON, create a corresponding 'video_module'. The 'global.description' should be a cinematic summary of the action. The 'sequence' should detail the motion based on the image description.
+
+4. **Hybrid Bridge**: Generate prompts for all specified AI tools ('veo2', 'kling', 'luma'). First, create the master 'prompt_object_v6' for 'veo2'. Then, derive the 'kling_structured_prompt' and the simple 'prompt_en' for 'luma' from that master object to ensure directorial consistency.
+
+5. **Output Requirements**: The final output MUST be a single, valid JSON object that strictly adheres to the provided Stage 7 schema. Ensure all required fields, including 'image_reference', are populated correctly.
+
+## Stage 6 JSON Data:
 ${JSON.stringify(rawImageJson, null, 2)}
-`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: instruction,
-            config: {
+## CRITICAL: Generate complete, valid JSON. Do not truncate or abbreviate the output.`;
+
+        const result = await model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: instruction }] }],
+            generationConfig: {
                 responseMimeType: 'application/json',
                 responseSchema: VideoGenerationResponseSchema,
+                temperature: 0.8,
+                maxOutputTokens: 32768,
+                topP: 0.95,
+                topK: 40,
             },
         });
 
-        const jsonStr = response.text.trim();
-        const videoJsonData = JSON.parse(jsonStr) as VideoRootJsonData;
+        const response = await result.response;
+        const jsonStr = response.text();
+
+        // JSON 검증 및 파싱
+        let videoJsonData: VideoRootJsonData;
+        try {
+            videoJsonData = JSON.parse(jsonStr) as VideoRootJsonData;
+        } catch (parseError) {
+            console.error('JSON 파싱 실패:', parseError);
+            console.error('응답 길이:', jsonStr.length);
+            console.error('응답 마지막 100자:', jsonStr.slice(-100));
+
+            // JSON이 잘린 경우 확인
+            if (jsonStr.length > 30000) {
+                throw new Error('생성된 JSON이 너무 큽니다. 더 작은 스토리로 시도해주세요.');
+            } else {
+                throw new Error('잘못된 JSON 형식입니다. 다시 시도해주세요.');
+            }
+        }
 
         // Transition to video studio with new data
         const newFileName = fileName?.replace('.json', '_video.json') || 'video_prompts.json';
@@ -275,7 +303,7 @@ ${JSON.stringify(rawImageJson, null, 2)}
     } finally {
         setIsLoading(false);
     }
-  }, [rawImageJson, fileName, processAndSetData]);
+  }, [rawImageJson, fileName, processAndSetData, apiKey, selectedModel]);
   
   const handleAudioGenerated = (data: AudioPromptData) => {
     setGeneratedAudioJson(data);
@@ -381,17 +409,19 @@ ${JSON.stringify(rawImageJson, null, 2)}
           <div className="flex items-center gap-4">
               {studioMode && (
                   <button onClick={handleGoHome} className="text-gray-300 hover:text-white transition-colors" aria-label="Home">
-                      <HomeIcon />
+                      <Home className="w-6 h-6" />
                   </button>
               )}
               {normalizedData && (
                   <button onClick={() => setIsSidebarOpen(true)} className="text-gray-300 hover:text-white lg:hidden">
-                      <MenuIcon />
+                      <Menu className="w-6 h-6" />
                   </button>
               )}
-              <h1 className="text-lg sm:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 whitespace-nowrap">
-                  AIFI 커스텀영상만들기
-              </h1>
+              <div className="flex items-center gap-2">
+                  <h1 className="text-lg sm:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 whitespace-nowrap">
+                      AIFI 커스텀영상만들기
+                  </h1>
+              </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
@@ -405,7 +435,7 @@ ${JSON.stringify(rawImageJson, null, 2)}
                  }`}
                  title={apiKey ? `연결됨: ${selectedModel}` : 'API 연동 설정'}
                >
-                 <ApiIcon className="w-5 h-5" />
+                 <Cable className="w-5 h-5" />
                  <span className="hidden sm:inline">
                    {apiKey ? 'API 연결됨' : 'API 연동'}
                  </span>
@@ -418,10 +448,10 @@ ${JSON.stringify(rawImageJson, null, 2)}
 
                {fileName && !error && (
                   <div className="hidden sm:flex items-center gap-2 overflow-hidden bg-gray-700/50 p-2 rounded-lg">
-                    <FileJsonIcon />
+                    <FileJson className="w-5 h-5" />
                     <span className="font-medium text-gray-200 truncate text-sm max-w-[120px]">{fileName}</span>
                     <button onClick={handleClearProject} className="text-gray-400 hover:text-white transition-colors flex-shrink-0">
-                      <XCircleIcon />
+                      <XCircle className="w-5 h-5" />
                     </button>
                   </div>
                 )}
@@ -429,7 +459,7 @@ ${JSON.stringify(rawImageJson, null, 2)}
                {studioMode === 'image' && rawImageJson && (
                  <div className="flex items-center gap-2">
                     <button onClick={() => handleDownloadJson('image')} className="relative cursor-pointer bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg flex items-center gap-2 text-sm">
-                        <DownloadIcon />
+                        <Download className="w-5 h-5" />
                         <span>JSON 다운로드</span>
                     </button>
                     <button onClick={handleGenerateVideoPrompts} disabled={isLoading} className="relative cursor-pointer bg-teal-600 hover:bg-teal-700 disabled:bg-teal-800/50 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg flex items-center justify-center gap-2 text-sm">
@@ -439,7 +469,7 @@ ${JSON.stringify(rawImageJson, null, 2)}
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                         ) : (
-                            <FilmIcon />
+                            <Film className="w-5 h-5" />
                         )}
                         <span>{isLoading ? '생성 중...' : '영상 프롬프트 생성'}</span>
                     </button>
@@ -448,21 +478,21 @@ ${JSON.stringify(rawImageJson, null, 2)}
                
                 {studioMode === 'video' && rawVideoJson && (
                     <button onClick={() => handleDownloadJson('video')} className="relative cursor-pointer bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg flex items-center gap-2 text-sm">
-                        <DownloadIcon />
+                        <Download className="w-5 h-5" />
                         <span>JSON 다운로드</span>
                     </button>
                 )}
                 
                 {studioMode === 'audio' && generatedAudioJson && (
                     <button onClick={() => handleDownloadJson('audio')} className="relative cursor-pointer bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg flex items-center gap-2 text-sm">
-                        <DownloadIcon />
+                        <Download className="w-5 h-5" />
                         <span>JSON 다운로드</span>
                     </button>
                 )}
               
                {showUploadButton && (
                  <label htmlFor="file-upload" className="relative cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg flex items-center gap-2 text-sm">
-                    <UploadIcon />
+                    <Upload className="w-5 h-5" />
                     <span>JSON업로드</span>
                  </label>
                )}
@@ -496,11 +526,11 @@ ${JSON.stringify(rawImageJson, null, 2)}
             {fileName && !error && (
                 <div className="sm:hidden mb-4 flex items-center gap-3 overflow-hidden bg-gray-700/50 p-3 rounded-lg w-full justify-between">
                     <div className="flex items-center gap-2 overflow-hidden">
-                    <FileJsonIcon />
+                    <FileJson className="w-5 h-5" />
                     <span className="font-medium text-gray-200 truncate text-sm">{fileName}</span>
                     </div>
                     <button onClick={handleClearProject} className="text-gray-400 hover:text-white transition-colors flex-shrink-0">
-                    <XCircleIcon />
+                    <XCircle className="w-5 h-5" />
                     </button>
                 </div>
             )}
@@ -517,13 +547,19 @@ ${JSON.stringify(rawImageJson, null, 2)}
             )}
 
             {studioMode === 'story' && !error && (
-              <StoryGenerator onStoryGenerated={handleStoryGenerated} />
+              <StoryGenerator
+                onStoryGenerated={handleStoryGenerated}
+                apiKey={apiKey}
+                selectedModel={selectedModel}
+              />
             )}
 
             {studioMode === 'audio' && !error && (
-              <AudioStudio 
+              <AudioStudio
                 onAudioGenerated={handleAudioGenerated}
                 initialData={generatedAudioJson}
+                apiKey={apiKey}
+                selectedModel={selectedModel}
               />
             )}
             

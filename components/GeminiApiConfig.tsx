@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { X, Loader2, CheckCircle, AlertCircle, Key, Sparkles, Zap, Rocket, Brain, FlaskConical, Gauge } from 'lucide-react';
 
 interface GeminiApiConfigProps {
   isOpen: boolean;
@@ -8,16 +9,59 @@ interface GeminiApiConfigProps {
 }
 
 const GEMINI_MODELS = [
-  { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash (최신/빠름)', description: '빠른 응답 속도와 효율성' },
-  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: '균형잡힌 성능' },
-  { id: 'gemini-1.5-flash-8b', name: 'Gemini 1.5 Flash 8B', description: '경량화 모델' },
-  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: '고급 기능과 정확성' },
-  { id: 'gemini-2.0-flash-thinking-exp', name: 'Gemini 2.0 Flash Thinking (실험)', description: '추론 강화 실험 모델' }
+  {
+    id: 'gemini-2.5-pro',
+    name: 'Gemini 2.5 Pro',
+    icon: Brain,
+    badge: '최신',
+    badgeColor: 'bg-gradient-to-r from-purple-500 to-pink-500',
+    description: '최고 성능, 복잡한 추론과 코딩, 100만 토큰 컨텍스트'
+  },
+  {
+    id: 'gemini-2.5-flash',
+    name: 'Gemini 2.5 Flash',
+    icon: Zap,
+    badge: '추천',
+    badgeColor: 'bg-gradient-to-r from-yellow-500 to-orange-500',
+    description: '최고의 가성비, 빠른 응답, 대규모 처리에 최적화'
+  },
+  {
+    id: 'gemini-2.5-flash-lite',
+    name: 'Gemini 2.5 Flash-Lite',
+    icon: Rocket,
+    badge: '경량',
+    badgeColor: 'bg-gradient-to-r from-green-500 to-teal-500',
+    description: '초경량 모델, 가장 빠른 속도와 낮은 비용'
+  },
+  {
+    id: 'gemini-2.0-flash-exp',
+    name: 'Gemini 2.0 Flash',
+    icon: FlaskConical,
+    badge: '실험',
+    badgeColor: 'bg-gray-600',
+    description: '이전 버전, 안정적인 성능'
+  },
+  {
+    id: 'gemini-1.5-pro',
+    name: 'Gemini 1.5 Pro',
+    icon: Gauge,
+    badge: 'v1.5',
+    badgeColor: 'bg-gray-600',
+    description: '이전 세대 고급 모델'
+  },
+  {
+    id: 'gemini-1.5-flash',
+    name: 'Gemini 1.5 Flash',
+    icon: Gauge,
+    badge: 'v1.5',
+    badgeColor: 'bg-gray-600',
+    description: '이전 세대 균형 모델'
+  }
 ];
 
 const GeminiApiConfig: React.FC<GeminiApiConfigProps> = ({ isOpen, onClose, onApiConnected }) => {
   const [apiKey, setApiKey] = useState('');
-  const [selectedModel, setSelectedModel] = useState('gemini-2.0-flash-exp');
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [savedApiKey, setSavedApiKey] = useState('');
@@ -25,7 +69,7 @@ const GeminiApiConfig: React.FC<GeminiApiConfigProps> = ({ isOpen, onClose, onAp
   useEffect(() => {
     // 저장된 API 키와 모델 불러오기
     const storedApiKey = localStorage.getItem('gemini_api_key');
-    const storedModel = localStorage.getItem('gemini_model') || 'gemini-2.0-flash-exp';
+    const storedModel = localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
 
     if (storedApiKey) {
       setSavedApiKey(storedApiKey);
@@ -58,7 +102,7 @@ const GeminiApiConfig: React.FC<GeminiApiConfigProps> = ({ isOpen, onClose, onAp
       if (text) {
         setTestResult({
           success: true,
-          message: `✅ 연결 성공! (${selectedModel})\n응답: ${text.slice(0, 50)}...`
+          message: `연결 성공! (${selectedModel})\n응답: ${text.slice(0, 50)}...`
         });
 
         // 성공 시 localStorage에 저장
@@ -112,16 +156,17 @@ const GeminiApiConfig: React.FC<GeminiApiConfigProps> = ({ isOpen, onClose, onAp
       <div className="bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">
-              Google Gemini API 연동
-            </h2>
+            <div className="flex items-center gap-3">
+              <Sparkles className="w-7 h-7 text-teal-400" />
+              <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">
+                Google Gemini API 연동
+              </h2>
+            </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors p-2"
+              className="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-6 h-6" />
             </button>
           </div>
         </div>
@@ -129,7 +174,8 @@ const GeminiApiConfig: React.FC<GeminiApiConfigProps> = ({ isOpen, onClose, onAp
         <div className="p-6 space-y-6">
           {/* API 키 입력 섹션 */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+              <Key className="w-4 h-4" />
               API 키 {savedApiKey && <span className="text-green-400 text-xs">(저장됨)</span>}
             </label>
             <div className="flex gap-2">
@@ -168,30 +214,43 @@ const GeminiApiConfig: React.FC<GeminiApiConfigProps> = ({ isOpen, onClose, onAp
               모델 선택
             </label>
             <div className="space-y-2">
-              {GEMINI_MODELS.map((model) => (
-                <label
-                  key={model.id}
-                  className={`flex items-start p-3 rounded-lg border cursor-pointer transition-all ${
-                    selectedModel === model.id
-                      ? 'bg-teal-900/30 border-teal-500'
-                      : 'bg-gray-800 border-gray-700 hover:bg-gray-750'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="model"
-                    value={model.id}
-                    checked={selectedModel === model.id}
-                    onChange={(e) => setSelectedModel(e.target.value)}
-                    className="mt-1 mr-3"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-white">{model.name}</div>
-                    <div className="text-sm text-gray-400">{model.description}</div>
-                    <div className="text-xs text-gray-500 mt-1">모델 ID: {model.id}</div>
-                  </div>
-                </label>
-              ))}
+              {GEMINI_MODELS.map((model) => {
+                const Icon = model.icon;
+                return (
+                  <label
+                    key={model.id}
+                    className={`flex items-start p-4 rounded-lg border cursor-pointer transition-all ${
+                      selectedModel === model.id
+                        ? 'bg-teal-900/30 border-teal-500 shadow-lg shadow-teal-500/20'
+                        : 'bg-gray-800 border-gray-700 hover:bg-gray-750 hover:border-gray-600'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="model"
+                      value={model.id}
+                      checked={selectedModel === model.id}
+                      onChange={(e) => setSelectedModel(e.target.value)}
+                      className="mt-1 mr-3"
+                    />
+                    <Icon className={`w-5 h-5 mr-3 mt-0.5 ${
+                      selectedModel === model.id ? 'text-teal-400' : 'text-gray-500'
+                    }`} />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-white">{model.name}</span>
+                        {model.badge && (
+                          <span className={`text-xs px-2 py-0.5 rounded-full text-white ${model.badgeColor}`}>
+                            {model.badge}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-400 mt-1">{model.description}</div>
+                      <div className="text-xs text-gray-500 mt-2">모델 ID: {model.id}</div>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
           </div>
 
@@ -204,25 +263,30 @@ const GeminiApiConfig: React.FC<GeminiApiConfigProps> = ({ isOpen, onClose, onAp
             >
               {isTestingConnection ? (
                 <>
-                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                  <Loader2 className="animate-spin h-5 w-5" />
                   <span>연결 테스트 중...</span>
                 </>
               ) : (
-                <span>연결 테스트</span>
+                <>
+                  <FlaskConical className="w-5 h-5" />
+                  <span>연결 테스트</span>
+                </>
               )}
             </button>
 
             {/* 테스트 결과 표시 */}
             {testResult && (
-              <div className={`mt-4 p-4 rounded-lg ${
+              <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${
                 testResult.success
                   ? 'bg-green-900/30 border border-green-500 text-green-300'
                   : 'bg-red-900/30 border border-red-500 text-red-300'
               }`}>
-                <pre className="text-sm whitespace-pre-wrap">{testResult.message}</pre>
+                {testResult.success ? (
+                  <CheckCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                )}
+                <pre className="text-sm whitespace-pre-wrap flex-1">{testResult.message}</pre>
               </div>
             )}
           </div>

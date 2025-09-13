@@ -1,20 +1,19 @@
 import React, { useState, useCallback, useMemo, ChangeEvent, useEffect } from 'react';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AudioPromptData, ImageRootJsonData } from '../types';
 import { AudioGenerationResponseSchema } from '../lib/geminiAudioSchema';
-import { MusicNoteIcon } from './icons/MusicNoteIcon';
+import { Music, Upload, FileJson, XCircle } from 'lucide-react';
 import PromptDetail from './PromptDetail';
-import { UploadIcon } from './icons/UploadIcon';
-import { FileJsonIcon } from './icons/FileJsonIcon';
-import { XCircleIcon } from './icons/XCircleIcon';
 
 
 interface AudioStudioProps {
   onAudioGenerated: (data: AudioPromptData) => void;
   initialData?: AudioPromptData | null;
+  apiKey: string | null;
+  selectedModel: string | null;
 }
 
-const AudioStudio: React.FC<AudioStudioProps> = ({ onAudioGenerated, initialData = null }) => {
+const AudioStudio: React.FC<AudioStudioProps> = ({ onAudioGenerated, initialData = null, apiKey, selectedModel }) => {
   const [stage6File, setStage6File] = useState<File | null>(null);
   const [stage6Json, setStage6Json] = useState<ImageRootJsonData | null>(null);
   const [generatedAudio, setGeneratedAudio] = useState<AudioPromptData | null>(null);
@@ -105,15 +104,22 @@ const AudioStudio: React.FC<AudioStudioProps> = ({ onAudioGenerated, initialData
       return;
     }
 
+    if (!apiKey) {
+      setError('API key is not configured. Please connect your API first.');
+      return;
+    }
+
+    if (!selectedModel) {
+      setError('No model selected. Please select a model.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setGeneratedAudio(null);
 
     try {
-      if (!process.env.API_KEY) {
-        throw new Error("API key is not configured.");
-      }
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenerativeAI(apiKey);
 
       const instruction = `You are an expert composer and screenwriter. Based on the provided Stage 6 (Visual Storyboard) JSON file, generate audio prompts. The desired language for lyrics and narration is ${language === 'ko' ? 'Korean' : 'English'}.
 
@@ -128,16 +134,20 @@ Your task is to infer the story and dialogue from the visual descriptions and ge
 
 The final output MUST be a single, valid JSON object strictly following the provided schema.`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: instruction,
-        config: {
+      const model = ai.getGenerativeModel({ model: selectedModel });
+
+      const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: instruction }] }],
+        generationConfig: {
           responseMimeType: 'application/json',
           responseSchema: AudioGenerationResponseSchema,
+          temperature: 0.9,
+          maxOutputTokens: 8192,
         }
       });
 
-      const jsonStr = response.text.trim();
+      const response = await result.response;
+      const jsonStr = response.text();
       const parsedJson = JSON.parse(jsonStr) as AudioPromptData;
       setGeneratedAudio(parsedJson);
       onAudioGenerated(parsedJson);
@@ -151,7 +161,7 @@ The final output MUST be a single, valid JSON object strictly following the prov
     } finally {
       setIsLoading(false);
     }
-  }, [stage6Json, language, onAudioGenerated]);
+  }, [stage6Json, language, onAudioGenerated, apiKey, selectedModel]);
   
   const isGenerationReady = stage6Json && stage6Json;
 
@@ -161,7 +171,7 @@ The final output MUST be a single, valid JSON object strictly following the prov
             !isGenerationReady ? (
                 <section>
                     <div className="text-center mb-8">
-                        <MusicNoteIcon className="h-12 w-12 text-indigo-400 mb-4 mx-auto" />
+                        <Music className="h-12 w-12 text-indigo-400 mb-4 mx-auto" />
                         <h2 className="text-xl font-bold text-gray-300 mb-2">오디오 스튜디오</h2>
                         <p className="text-gray-400">새로운 오디오 프롬프트를 생성하거나 기존 파일을 복원하세요.</p>
                     </div>
@@ -170,7 +180,7 @@ The final output MUST be a single, valid JSON object strictly following the prov
                             <h3 className="text-lg font-bold text-white mb-2">Stage 6 제이슨 업로드</h3>
                             <p className="text-sm text-gray-400 mb-4 flex-grow">Stage 6 파일을 업로드하여 AI로 음악과 내레이션 프롬프트를 만듭니다.</p>
                             <label htmlFor="stage6-upload" className="w-full cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-all transform hover:scale-105 shadow-lg flex items-center justify-center gap-2">
-                                <UploadIcon />
+                                <Upload className="w-5 h-5" />
                                 <span>업로드하여 생성</span>
                             </label>
                             <input id="stage6-upload" type="file" className="hidden" accept=".json" onChange={handleStage6Upload} />
@@ -179,7 +189,7 @@ The final output MUST be a single, valid JSON object strictly following the prov
                             <h3 className="text-lg font-bold text-white mb-2">백업 복원</h3>
                             <p className="text-sm text-gray-400 mb-4 flex-grow">이전에 생성된 오디오 프롬프트 JSON 파일을 불러와서 확인합니다.</p>
                             <label htmlFor="restore-upload" className="w-full cursor-pointer bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition-all transform hover:scale-105 shadow-lg flex items-center justify-center gap-2">
-                                <UploadIcon />
+                                <Upload className="w-5 h-5" />
                                 <span>파일 복원</span>
                             </label>
                             <input id="restore-upload" type="file" className="hidden" accept=".json" onChange={handleRestoreUpload} />
@@ -189,7 +199,7 @@ The final output MUST be a single, valid JSON object strictly following the prov
             ) : (
                 <section className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 shadow-lg">
                     <div className="text-center mb-6">
-                        <MusicNoteIcon className="h-12 w-12 text-indigo-400 mb-4 mx-auto" />
+                        <Music className="h-12 w-12 text-indigo-400 mb-4 mx-auto" />
                         <h2 className="text-xl font-bold text-gray-300 mb-2">오디오 스튜디오</h2>
                         <p className="text-gray-400">오디오 프롬프트를 생성할 준비가 되었습니다.</p>
                     </div>
@@ -197,11 +207,11 @@ The final output MUST be a single, valid JSON object strictly following the prov
                     {stage6File && (
                         <div className="mb-6 flex items-center justify-between gap-2 bg-gray-700/50 p-3 rounded-lg text-sm max-w-sm mx-auto">
                             <div className="flex items-center gap-2 overflow-hidden">
-                                <FileJsonIcon />
+                                <FileJson className="w-5 h-5" />
                                 <span className="font-medium text-gray-200 truncate">{stage6File.name}</span>
                             </div>
                             <button onClick={() => { setStage6File(null); setStage6Json(null); }} className="text-gray-400 hover:text-white transition-colors flex-shrink-0">
-                                <XCircleIcon />
+                                <XCircle className="w-5 h-5" />
                             </button>
                         </div>
                     )}
