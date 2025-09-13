@@ -10,11 +10,13 @@ import { MenuIcon } from './components/icons/MenuIcon';
 import { HomeIcon } from './components/icons/HomeIcon';
 import { DownloadIcon } from './components/icons/DownloadIcon';
 import { FilmIcon } from './components/icons/FilmIcon';
+import { ApiIcon } from './components/icons/ApiIcon';
 import { VideoGenerationResponseSchema } from './lib/geminiVideoSchema';
 import StudioSelection from './components/StudioSelection';
 import PromptEditor from './components/PromptEditor';
 import StoryGenerator from './components/StoryGenerator';
 import AudioStudio from './components/AudioStudio';
+import GeminiApiConfig from './components/GeminiApiConfig';
 
 const UploadPlaceholder: React.FC<{ studioMode: 'image' | 'video', onClick: () => void }> = ({ studioMode, onClick }) => {
   const studioName = studioMode === 'image' ? '이미지 스튜디오' : '영상 스튜디오';
@@ -53,6 +55,9 @@ const App: React.FC = () => {
   const [activeShotId, setActiveShotId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState<NormalizedPrompt | null>(null);
+  const [isApiConfigOpen, setIsApiConfigOpen] = useState(false);
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const mainContentRef = useRef<HTMLElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -337,6 +342,23 @@ ${JSON.stringify(rawImageJson, null, 2)}
     setEditingPrompt(null);
   };
 
+  const handleApiConnected = (connectedApiKey: string, connectedModel: string) => {
+    setApiKey(connectedApiKey);
+    setSelectedModel(connectedModel);
+    // 여기에 API 연결 후 추가 로직을 구현할 수 있습니다
+    console.log('API 연결됨:', connectedModel);
+  };
+
+  // 컴포넌트 마운트 시 저장된 API 설정 확인
+  useEffect(() => {
+    const storedApiKey = localStorage.getItem('gemini_api_key');
+    const storedModel = localStorage.getItem('gemini_model');
+    if (storedApiKey && storedModel) {
+      setApiKey(storedApiKey);
+      setSelectedModel(storedModel);
+    }
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -373,6 +395,27 @@ ${JSON.stringify(rawImageJson, null, 2)}
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
+               {/* API 연동 버튼 */}
+               <button
+                 onClick={() => setIsApiConfigOpen(true)}
+                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                   apiKey
+                     ? 'bg-green-600/20 border border-green-500 text-green-400 hover:bg-green-600/30'
+                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                 }`}
+                 title={apiKey ? `연결됨: ${selectedModel}` : 'API 연동 설정'}
+               >
+                 <ApiIcon className="w-5 h-5" />
+                 <span className="hidden sm:inline">
+                   {apiKey ? 'API 연결됨' : 'API 연동'}
+                 </span>
+                 {apiKey && (
+                   <span className="hidden lg:inline text-xs opacity-75">
+                     ({selectedModel?.split('-').slice(0, 2).join(' ')})
+                   </span>
+                 )}
+               </button>
+
                {fileName && !error && (
                   <div className="hidden sm:flex items-center gap-2 overflow-hidden bg-gray-700/50 p-2 rounded-lg">
                     <FileJsonIcon />
@@ -493,12 +536,19 @@ ${JSON.stringify(rawImageJson, null, 2)}
       </div>
 
       {editingPrompt && studioMode === 'video' && 'veo2' in editingPrompt.prompts && (
-        <PromptEditor 
-          promptData={editingPrompt} 
+        <PromptEditor
+          promptData={editingPrompt}
           onSave={handleSavePrompt}
           onClose={handleCloseEditor}
         />
       )}
+
+      {/* Gemini API 설정 모달 */}
+      <GeminiApiConfig
+        isOpen={isApiConfigOpen}
+        onClose={() => setIsApiConfigOpen(false)}
+        onApiConnected={handleApiConnected}
+      />
     </div>
   );
 };
