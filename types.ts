@@ -51,14 +51,14 @@ export interface NormalizedData {
 // Discriminated union for raw JSON data
 // =================================================================
 
-export type AnyRootJsonData = VideoRootJsonData | ImageRootJsonData;
+export type AnyRootJsonData = VideoRootJsonData | ImageRootJsonData | AudioPromptData;
 
 // =================================================================
-// Types for Video Prompt JSON
+// Types for Video Prompt JSON (Stage 7 Hybrid Schema v7.1)
 // =================================================================
 
 export interface VideoRootJsonData {
-  stage: number;
+  stage: 7;
   version: string;
   timestamp: string;
   scene_info: {
@@ -80,25 +80,35 @@ export interface VideoRootJsonData {
 export interface VideoPrompt {
   image_id: string;
   shot_id: string;
+  image_reference: {
+    title: string;
+    description: string;
+  };
+  source_data?: object; // Made optional
+  extracted_data?: object; // Made optional
   prompts: Prompts;
 }
 
 export interface Prompts {
-  veo2: Veo2Prompt;
-  kling: KlingPrompt;
-  luma: LumaPrompt;
-  [key: string]: Veo2Prompt | KlingPrompt | LumaPrompt;
+  veo2?: Veo2Prompt;
+  kling?: KlingPrompt;
+  luma?: LumaPrompt;
+  runway?: LumaPrompt; // Assuming runway has a similar structure to luma
+  [key: string]: Veo2Prompt | KlingPrompt | LumaPrompt | undefined;
 }
 
 export interface Veo2Settings {
   duration: string;
-  aspect_ratio: string;
+  camera_movement: string;
 }
 
-export interface CoreModuleCharacter {
-  [key: string]: {
+export interface CoreModuleCharacterDetail {
     id: string;
-  };
+    signature_details: string;
+    voice_consistency?: string;
+}
+export interface CoreModuleCharacter {
+  [key: string]: CoreModuleCharacterDetail;
 }
 
 export interface CoreModule {
@@ -107,7 +117,7 @@ export interface CoreModule {
     setting: string;
     details?: string;
   };
-  project_style: string;
+  project_style?: string;
 }
 
 export interface VideoModuleSequenceEffect {
@@ -116,11 +126,12 @@ export interface VideoModuleSequenceEffect {
 }
 
 export interface VideoModuleSequence {
-    timestamp: string;
+    timestamp?: string;
     camera?: string;
     motion: string;
     transition_in?: string;
     effects?: VideoModuleSequenceEffect[];
+    dialogue_block?: { dialogue: string };
 }
 
 export interface VideoModule {
@@ -129,9 +140,11 @@ export interface VideoModule {
   };
   global: {
     description: string;
+    style: string;
   };
   sequence: VideoModuleSequence[];
   effects?: VideoModuleSequenceEffect[];
+  negative_prompts?: string[];
 }
 
 export interface PromptObjectV6 {
@@ -149,12 +162,19 @@ export interface Veo2Prompt {
 export interface KlingPrompt {
   prompt_en: string;
   prompt_translated: string;
+  settings: {
+      duration: string;
+      aspect_ratio: string;
+  }
   kling_structured_prompt: string;
 }
 
 export interface LumaPrompt {
   prompt_en: string;
   prompt_translated: string;
+  settings: {
+      duration: string;
+  }
 }
 
 // =================================================================
@@ -184,6 +204,7 @@ export interface Shot {
     shot_description: string;
     image_count: number;
     images: Image[];
+    estimated_duration_seconds: number;
 }
 
 export interface Image {
@@ -204,4 +225,18 @@ export interface ImagePrompts {
 
 export interface CsvData {
     [key: string]: string;
+}
+
+// =================================================================
+// Types for Audio Prompt JSON
+// =================================================================
+
+export interface MusicPrompts {
+  description: string; // English description for music style
+  lyrics: string;      // Lyrics in the selected language
+}
+
+export interface AudioPromptData {
+  music_prompts: MusicPrompts;
+  narration_script: string;
 }

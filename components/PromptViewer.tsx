@@ -77,7 +77,7 @@ const PromptViewer: React.FC<PromptViewerProps> = ({ data, onVisibleShotChange, 
               <h2 className="text-2xl font-bold text-teal-400">{data.scene_info.scene_title}</h2>
               <ChevronDownIcon className={`w-6 h-6 text-gray-400 transition-transform duration-300 ${isSceneInfoOpen ? 'rotate-180' : ''}`} />
             </button>
-            <div className={`transition-all duration-500 ease-in-out ${isSceneInfoOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isSceneInfoOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
               <div className="px-6 pb-6 pt-2">
                 <dl className="space-y-3 text-sm">
                     <InfoItem label="Scene ID" value={data.scene_info.scene_id} />
