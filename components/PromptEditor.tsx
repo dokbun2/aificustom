@@ -36,51 +36,120 @@ const TextAreaField: React.FC<{ label: string; value: string; path: (string|numb
     </div>
 );
 
-const PromptEditorForm: React.FC<{ prompt: PromptObjectV6, onFieldChange: (path: (string|number)[], value: any) => void }> = ({ prompt, onFieldChange }) => (
-    <div className="space-y-6">
-        <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-            <h4 className="text-md font-bold text-teal-400 mb-3">코어 모듈</h4>
-            <div className="space-y-3">
-                <div className="p-3 bg-gray-900/50 rounded-md">
-                    <h5 className="text-sm font-semibold text-gray-300 mb-2">캐릭터</h5>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {Object.entries(prompt.core_module.character).map(([key, value]) => (
-                            <InputField key={key} label={key} value={value.id} path={['core_module', 'character', key, 'id']} onChange={onFieldChange} />
-                        ))}
-                    </div>
-                </div>
-                <div className="p-3 bg-gray-900/50 rounded-md">
-                    <h5 className="text-sm font-semibold text-gray-300 mb-2">장소</h5>
-                    <div className="space-y-3">
-                        <InputField label="설정" value={prompt.core_module.location_baseline.setting} path={['core_module', 'location_baseline', 'setting']} onChange={onFieldChange} />
-                        <InputField label="세부사항" value={prompt.core_module.location_baseline.details || ''} path={['core_module', 'location_baseline', 'details']} onChange={onFieldChange} />
-                    </div>
-                </div>
-                <InputField label="프로젝트 스타일" value={prompt.core_module.project_style} path={['core_module', 'project_style']} onChange={onFieldChange} />
+const PromptEditorForm: React.FC<{ prompt: PromptObjectV6, onFieldChange: (path: (string|number)[], value: any) => void }> = ({ prompt, onFieldChange }) => {
+    // 데이터 안전성 체크
+    if (!prompt || !prompt.core_module) {
+        return (
+            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                <p className="text-gray-400">프롬프트 데이터를 불러올 수 없습니다.</p>
             </div>
-        </div>
-        <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-            <h4 className="text-md font-bold text-teal-400 mb-3">비디오 모듈</h4>
-             <div className="space-y-3">
-                <InputField label="길이 (초)" value={String(prompt.video_module.metadata.duration_seconds)} path={['video_module', 'metadata', 'duration_seconds']} onChange={(path, value) => onFieldChange(path, Number(value))} />
-                <TextAreaField label="전체 설명" value={prompt.video_module.global.description} path={['video_module', 'global', 'description']} onChange={onFieldChange} />
-                <div>
-                     <h5 className="text-sm font-semibold text-gray-300 my-2">시퀀스</h5>
-                    {prompt.video_module.sequence.map((seq, index) => (
-                        <div key={index} className="p-3 bg-gray-900/50 rounded-md mb-3">
-                            <h6 className="text-xs font-bold text-gray-400 mb-2 uppercase">항목 {index + 1}</h6>
-                            <div className="space-y-3">
-                                <InputField label="타임스탬프" value={seq.timestamp} path={['video_module', 'sequence', index, 'timestamp']} onChange={onFieldChange} />
-                                <InputField label="카메라" value={seq.camera || ''} path={['video_module', 'sequence', index, 'camera']} onChange={onFieldChange} />
-                                <TextAreaField label="모션" value={seq.motion} path={['video_module', 'sequence', index, 'motion']} onChange={onFieldChange} />
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                <h4 className="text-md font-bold text-teal-400 mb-3">코어 모듈</h4>
+                <div className="space-y-3">
+                    {prompt.core_module?.character && (
+                        <div className="p-3 bg-gray-900/50 rounded-md">
+                            <h5 className="text-sm font-semibold text-gray-300 mb-2">캐릭터</h5>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {Object.entries(prompt.core_module.character).map(([key, value]) => (
+                                    <InputField
+                                        key={key}
+                                        label={key}
+                                        value={(value as any)?.id || ''}
+                                        path={['core_module', 'character', key, 'id']}
+                                        onChange={onFieldChange}
+                                    />
+                                ))}
                             </div>
                         </div>
-                    ))}
-                </div>
+                    )}
+                    {prompt.core_module?.location_baseline && (
+                        <div className="p-3 bg-gray-900/50 rounded-md">
+                            <h5 className="text-sm font-semibold text-gray-300 mb-2">장소</h5>
+                            <div className="space-y-3">
+                                <InputField
+                                    label="설정"
+                                    value={prompt.core_module.location_baseline?.setting || ''}
+                                    path={['core_module', 'location_baseline', 'setting']}
+                                    onChange={onFieldChange}
+                                />
+                                <InputField
+                                    label="세부사항"
+                                    value={prompt.core_module.location_baseline?.details || ''}
+                                    path={['core_module', 'location_baseline', 'details']}
+                                    onChange={onFieldChange}
+                                />
+                            </div>
+                        </div>
+                    )}
+                    <InputField
+                        label="프로젝트 스타일"
+                        value={prompt.core_module?.project_style || ''}
+                        path={['core_module', 'project_style']}
+                        onChange={onFieldChange}
+                    />
             </div>
         </div>
+        {prompt.video_module && (
+            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                <h4 className="text-md font-bold text-teal-400 mb-3">비디오 모듈</h4>
+                <div className="space-y-3">
+                    {prompt.video_module?.metadata && (
+                        <InputField
+                            label="길이 (초)"
+                            value={String(prompt.video_module.metadata?.duration_seconds || 0)}
+                            path={['video_module', 'metadata', 'duration_seconds']}
+                            onChange={(path, value) => onFieldChange(path, Number(value))}
+                        />
+                    )}
+                    {prompt.video_module?.global && (
+                        <TextAreaField
+                            label="전체 설명"
+                            value={prompt.video_module.global?.description || ''}
+                            path={['video_module', 'global', 'description']}
+                            onChange={onFieldChange}
+                        />
+                    )}
+                    {prompt.video_module?.sequence && Array.isArray(prompt.video_module.sequence) && (
+                        <div>
+                            <h5 className="text-sm font-semibold text-gray-300 my-2">시퀀스</h5>
+                            {prompt.video_module.sequence.map((seq, index) => (
+                                <div key={index} className="p-3 bg-gray-900/50 rounded-md mb-3">
+                                    <h6 className="text-xs font-bold text-gray-400 mb-2 uppercase">항목 {index + 1}</h6>
+                                    <div className="space-y-3">
+                                        <InputField
+                                            label="타임스탬프"
+                                            value={seq?.timestamp || ''}
+                                            path={['video_module', 'sequence', index, 'timestamp']}
+                                            onChange={onFieldChange}
+                                        />
+                                        <InputField
+                                            label="카메라"
+                                            value={seq?.camera || ''}
+                                            path={['video_module', 'sequence', index, 'camera']}
+                                            onChange={onFieldChange}
+                                        />
+                                        <TextAreaField
+                                            label="모션"
+                                            value={seq?.motion || ''}
+                                            path={['video_module', 'sequence', index, 'motion']}
+                                            onChange={onFieldChange}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        )}
     </div>
-);
+    );
+};
 
 
 const PromptEditor: React.FC<{
@@ -90,11 +159,37 @@ const PromptEditor: React.FC<{
 }> = ({ promptData, onSave, onClose }) => {
 
     const getOriginalPrompt = () => {
-        if ('veo2' in promptData.prompts) {
+        // 비디오 모드 (veo2가 있는 경우)
+        if ('veo2' in promptData.prompts && (promptData.prompts as any).veo2?.prompt_object_v6) {
             return (promptData.prompts as any).veo2.prompt_object_v6 as PromptObjectV6;
         }
-        // This case should not be reached if the editor is only opened for video prompts
-        return {} as PromptObjectV6;
+        // 이미지 모드 (prompt_object_v6가 직접 있는 경우)
+        if ('prompt_object_v6' in promptData.prompts && (promptData.prompts as any).prompt_object_v6) {
+            return (promptData.prompts as any).prompt_object_v6 as PromptObjectV6;
+        }
+
+        // 기본 구조 반환
+        const defaultPrompt: PromptObjectV6 = {
+            core_module: {
+                character: {},
+                location_baseline: {
+                    setting: '',
+                    details: ''
+                },
+                project_style: ''
+            },
+            video_module: {
+                metadata: {
+                    duration_seconds: 0
+                },
+                global: {
+                    description: ''
+                },
+                sequence: []
+            }
+        };
+
+        return defaultPrompt;
     }
     
     const originalPrompt = getOriginalPrompt();

@@ -355,9 +355,16 @@ ${JSON.stringify(rawImageJson, null, 2)}
     const updatedPrompts = normalizedData.prompts.map(p => {
       if (p.image_id === editingPrompt.image_id) {
         const newP = JSON.parse(JSON.stringify(p));
+
+        // veo2가 있는 경우 (비디오 모드)
         if (newP.prompts.veo2) {
           (newP.prompts as Prompts).veo2!.prompt_object_v6 = updatedPromptObject;
         }
+        // prompt_object_v6가 직접 있는 경우 (이미지 모드)
+        else if (newP.prompts.prompt_object_v6) {
+          (newP.prompts as any).prompt_object_v6 = updatedPromptObject;
+        }
+
         return newP;
       }
       return p;
@@ -572,7 +579,7 @@ ${JSON.stringify(rawImageJson, null, 2)}
         </main>
       </div>
 
-      {editingPrompt && studioMode === 'video' && 'veo2' in editingPrompt.prompts && (
+      {editingPrompt && (
         <PromptEditor
           promptData={editingPrompt}
           onSave={handleSavePrompt}
